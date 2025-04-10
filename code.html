@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Recommendation System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .results h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .course-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .course-item {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .course-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .course-description {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .grade-info {
+            background-color: #e8f4fc;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Course Recommendation System</h1>
+        
+        <div class="grade-info">
+            <p>Enter your grade (A+, A, B+, B, C+, C, D, F) to get personalized course recommendations based on your academic performance.</p>
+        </div>
+        
+        <div class="input-section">
+            <label for="grade">Your Current Grade:</label>
+            <select id="grade">
+                <option value="">Select your grade</option>
+                <option value="A+">A+ (Outstanding)</option>
+                <option value="A">A (Excellent)</option>
+                <option value="B+">B+ (Very Good)</option>
+                <option value="B">B (Good)</option>
+                <option value="C+">C+ (Above Average)</option>
+                <option value="C">C (Average)</option>
+                <option value="D">D (Below Average)</option>
+                <option value="F">F (Fail)</option>
+            </select>
+            <p class="error" id="gradeError">Please select a grade</p>
+        </div>
+        
+        <div class="input-section">
+            <label for="subject">Subject Area of Interest:</label>
+            <select id="subject">
+                <option value="">Select a subject</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Science">Science</option>
+                <option value="Arts">Arts</option>
+                <option value="Business">Business</option>
+            </select>
+            <p class="error" id="subjectError">Please select a subject area</p>
+        </div>
+        
+        <button id="recommendBtn">Get Course Recommendations</button>
+        
+        <div class="results" id="results">
+            <h2>Recommended Courses</h2>
+            <ul class="course-list" id="courseList">
+                <!-- Course recommendations will be added here -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const recommendBtn = document.getElementById('recommendBtn');
+            const gradeSelect = document.getElementById('grade');
+            const subjectSelect = document.getElementById('subject');
+            const resultsDiv = document.getElementById('results');
+            const courseList = document.getElementById('courseList');
+            const gradeError = document.getElementById('gradeError');
+            const subjectError = document.getElementById('subjectError');
+            
+            // Course database organized by subject and grade
+            const courseDatabase = {
+                "Computer Science": {
+                    "A+": [
+                        {
+                            title: "Advanced Machine Learning",
+                            description: "A cutting-edge course covering deep learning, neural networks, and AI applications."
+                        },
+                        {
+                            title: "Quantum Computing",
+                            description: "Explore the principles of quantum mechanics applied to computation."
+                        },
+                        {
+                            title: "Advanced Algorithms",
+                            description: "Study complex algorithmic techniques and optimization strategies."
+                        }
+                    ],
+                    "A": [
+                        {
+                            title: "Data Science and Analytics",
+                            description: "Learn to extract meaningful insights from complex datasets."
+                        },
+                        {
+                            title: "Full Stack Development",
+                            description: "Master front-end and back-end technologies for web application development."
+                        }
+                    ],
+                    "B+": [
+                        {
+                            title: "Object-Oriented Programming",
+                            description: "Develop software using object-oriented design principles."
+                        },
+                        {
+                            title: "Database Management Systems",
+                            description: "Learn to design, implement and manage relational databases."
+                        }
+                    ],
+                    "B": [
+                        {
+                            title: "Web Development",
+                            description: "Create responsive websites using HTML, CSS, and JavaScript."
+                        },
+                        {
+                            title: "Data Structures",
+                            description: "Understand fundamental data structures and their applications."
+                        }
+                    ],
+                    "C+": [
+                        {
+                            title: "Introduction to Programming",
+                            description: "Learn programming fundamentals with practical exercises."
+                        },
+                        {
+                            title: "Computer Networking Basics",
+                            description: "Understand how computer networks function and communicate."
+                        }
+                    ],
+                    "C": [
+                        {
+                            title: "Computer Literacy",
+                            description: "Master essential computer skills and office applications."
+                        },
+                        {
+                            title: "Introduction to Coding",
+                            description: "Begin your coding journey with simple programming concepts."
+                        }
+                    ],
+                    "D": [
+                        {
+                            title: "Computer Skills Workshop",
+                            description: "Hands-on workshop to build fundamental computer skills."
+                        },
+                        {
+                            title: "Programming Fundamentals Review",
+                            description: "Strengthen your understanding of basic programming concepts."
+                        }
+                    ],
+                    "F": [
+                        {
+                            title: "Computing Foundations",
+                            description: "Build a solid foundation in basic computing concepts."
+                        },
+                        {
+                            title: "Programming Essentials",
+                            description: "Master the essential concepts needed for successful programming."
+                        }
+                    ]
+                },
+                "Mathematics": {
+                    "A+": [
+                        {
+                            title: "Advanced Calculus",
+                            description: "Explore complex concepts in calculus and mathematical analysis."
+                        },
+                        {
+                            title: "Abstract Algebra",
+                            description: "Study algebraic structures and their properties."
+                        }
+                    ],
+                    "A": [
+                        {
+                            title: "Linear Algebra",
+                            description: "Master vector spaces, matrices, and linear transformations."
+                        },
+                        {
+                            title: "Differential Equations",
+                            description: "Solve and analyze differential equations and their applications."
+                        }
+                    ],
+                    "B+": [
+                        {
+                            title: "Statistics and Probability",
+                            description: "Learn statistical methods and probability theory."
+                        },
+                        {
+                            title: "Discrete Mathematics",
+                            description: "Study mathematical structures that are fundamentally discrete."
+                        }
+                    ],
+                    "B": [
+                        {
+                            title: "Calculus II",
+                            description: "Continue your calculus studies with integration techniques."
+                        },
+                        {
+                            title: "Applied Mathematics",
+                            description: "Apply mathematical concepts to solve real-world problems."
+                        }
+                    ],
+                    "C+": [
+                        {
+                            title: "Calculus I",
+                            description: "Introduction to differential calculus and its applications."
+                        },
+                        {
+                            title: "College Algebra",
+                            description: "Master algebraic concepts and problem-solving techniques."
+                        }
+                    ],
+                    "C": [
+                        {
+                            title: "Pre-Calculus",
+                            description: "Prepare for calculus with functions, trigonometry, and analytic geometry."
+                        },
+                        {
+                            title: "Mathematical Problem Solving",
+                            description: "Develop strategies for solving mathematical problems."
+                        }
+                    ],
+                    "D": [
+                        {
+                            title: "Intermediate Algebra",
+                            description: "Strengthen your foundation in algebraic concepts."
+                        },
+                        {
+                            title: "Mathematics Skills Workshop",
+                            description: "Practical exercises to improve mathematical proficiency."
+                        }
+                    ],
+                    "F": [
+                        {
+                            title: "Basic Mathematics",
+                            description: "Review fundamental mathematical operations and concepts."
+                        },
+                        {
+                            title: "Mathematics Foundations",
+                            description: "Build essential skills in arithmetic and basic algebra."
+                        }
+                    ]
+                },
+                "Science": {
+                    "A+": [
+                        {
+                            title: "Advanced Quantum Physics",
+                            description: "Explore the cutting-edge theories of quantum mechanics."
+                        },
+                        {
+                            title: "Molecular Biology Research",
+                            description: "Conduct research in advanced molecular biology concepts."
+                        }
+                    ],
+                    "A": [
+                        {
+                            title: "Organic Chemistry",
+                            description: "Study complex organic compounds and their reactions."
+                        },
+                        {
+                            title: "Genetics and Genomics",
+                            description: "Explore inheritance patterns and genomic structures."
+                        }
+                    ],
+                    "B+": [
+                        {
+                            title: "Physics II: Electricity and Magnetism",
+                            description: "Study electromagnetic phenomena and their applications."
+                        },
+                        {
+                            title: "Cell Biology",
+                            description: "Understand the structure and function of cells."
+                        }
+                    ],
+                    "B": [
+                        {
+                            title: "Physics I: Mechanics",
+                            description: "Learn the principles of classical mechanics."
+                        },
+                        {
+                            title: "Chemistry II",
+                            description: "Continue your chemistry studies with more complex concepts."
+                        }
+                    ],
+                    "C+": [
+                        {
+                            title: "Chemistry I",
+                            description: "Introduction to chemical principles and reactions."
+                        },
+                        {
+                            title: "Biology I",
+                            description: "Study the fundamentals of living organisms."
+                        }
+                    ],
+                    "C": [
+                        {
+                            title: "Introduction to Environmental Science",
+                            description: "Understand human impact on natural systems."
+                        },
+                        {
+                            title: "Astronomy Basics",
+                            description: "Explore the universe and celestial objects."
+                        }
+                    ],
+                    "D": [
+                        {
+                            title: "Science Concepts Review",
+                            description: "Strengthen your understanding of basic scientific principles."
+                        },
+                        {
+                            title: "Laboratory Skills Workshop",
+                            description: "Develop practical laboratory techniques and safety procedures."
+                        }
+                    ],
+                    "F": [
+                        {
+                            title: "Science Foundations",
+                            description: "Build a solid foundation in basic scientific concepts."
+                        },
+                        {
+                            title: "Introduction to Scientific Thinking",
+                            description: "Learn the scientific method and critical thinking skills."
+                        }
+                    ]
+                },
+                "Arts": {
+                    "A+": [
+                        {
+                            title: "Advanced Studio Art",
+                            description: "Create a professional portfolio of advanced artistic works."
+                        },
+                        {
+                            title: "Art History Seminar",
+                            description: "Conduct in-depth research on art historical movements."
+                        }
+                    ],
+                    "A": [
+                        {
+                            title: "Digital Media Production",
+                            description: "Create sophisticated digital art and multimedia projects."
+                        },
+                        {
+                            title: "Advanced Photography",
+                            description: "Master complex photographic techniques and artistic vision."
+                        }
+                    ],
+                    "B+": [
+                        {
+                            title: "Intermediate Painting",
+                            description: "Develop your painting skills with various media and techniques."
+                        },
+                        {
+                            title: "Sculpture and 3D Design",
+                            description: "Create three-dimensional art using various materials."
+                        }
+                    ],
+                    "B": [
+                        {
+                            title: "Introduction to Drawing",
+                            description: "Learn fundamental drawing techniques and composition."
+                        },
+                        {
+                            title: "Art History Survey",
+                            description: "Explore major artistic movements throughout history."
+                        }
+                    ],
+                    "C+": [
+                        {
+                            title: "Digital Art Fundamentals",
+                            description: "Create art using digital tools and software."
+                        },
+                        {
+                            title: "Introduction to Photography",
+                            description: "Learn basic photographic principles and composition."
+                        }
+                    ],
+                    "C": [
+                        {
+                            title: "Creative Expression Workshop",
+                            description: "Explore various artistic media and personal creativity."
+                        },
+                        {
+                            title: "Visual Design Basics",
+                            description: "Understand the elements and principles of design."
+                        }
+                    ],
+                    "D": [
+                        {
+                            title: "Art Appreciation",
+                            description: "Develop skills for understanding and enjoying art."
+                        },
+                        {
+                            title: "Creative Skills Workshop",
+                            description: "Hands-on activities to build artistic confidence."
+                        }
+                    ],
+                    "F": [
+                        {
+                            title: "Introductory Art Studio",
+                            description: "Build foundational skills across various art media."
+                        },
+                        {
+                            title: "Visual Arts Foundations",
+                            description: "Learn the basic elements of visual expression."
+                        }
+                    ]
+                },
+                "Business": {
+                    "A+": [
+                        {
+                            title: "Advanced Financial Analysis",
+                            description: "Master complex financial modeling and valuation techniques."
+                        },
+                        {
+                            title: "Strategic Management",
+                            description: "Develop and implement sophisticated business strategies."
+                        }
+                    ],
+                    "A": [
+                        {
+                            title: "International Business",
+                            description: "Understand global markets and cross-cultural business practices."
+                        },
+                        {
+                            title: "Investment Management",
+                            description: "Learn advanced portfolio management techniques."
+                        }
+                    ],
+                    "B+": [
+                        {
+                            title: "Marketing Management",
+                            description: "Develop comprehensive marketing strategies and campaigns."
+                        },
+                        {
+                            title: "Business Law",
+                            description: "Understand legal principles affecting business operations."
+                        }
+                    ],
+                    "B": [
+                        {
+                            title: "Financial Accounting",
+                            description: "Learn to prepare and analyze financial statements."
+                        },
+                        {
+                            title: "Principles of Management",
+                            description: "Study effective management techniques and leadership."
+                        }
+                    ],
+                    "C+": [
+                        {
+                            title: "Introduction to Marketing",
+                            description: "Understand basic marketing concepts and consumer behavior."
+                        },
+                        {
+                            title: "Business Economics",
+                            description: "Apply economic principles to business decision-making."
+                        }
+                    ],
+                    "C": [
+                        {
+                            title: "Introduction to Business",
+                            description: "Overview of business functions and environments."
+                        },
+                        {
+                            title: "Business Communication",
+                            description: "Develop effective written and verbal business communication skills."
+                        }
+                    ],
+                    "D": [
+                        {
+                            title: "Business Skills Workshop",
+                            description: "Practical exercises to develop fundamental business competencies."
+                        },
+                        {
+                            title: "Professional Development",
+                            description: "Build essential workplace skills for business environments."
+                        }
+                    ],
+                    "F": [
+                        {
+                            title: "Business Foundations",
+                            description: "Build a solid foundation in basic business concepts."
+                        },
+                        {
+                            title: "Workplace Readiness",
+                            description: "Develop the essential skills needed for business environments."
+                        }
+                    ]
+                }
+            };
+            
+            recommendBtn.addEventListener('click', function() {
+                // Validate inputs
+                let isValid = true;
+                
+                if (gradeSelect.value === "") {
+                    gradeError.style.display = "block";
+                    isValid = false;
+                } else {
+                    gradeError.style.display = "none";
+                }
+                
+                if (subjectSelect.value === "") {
+                    subjectError.style.display = "block";
+                    isValid = false;
+                } else {
+                    subjectError.style.display = "none";
+                }
+                
+                if (!isValid) {
+                    return;
+                }
+                
+                // Get recommended courses
+                const grade = gradeSelect.value;
+                const subject = subjectSelect.value;
+                
+                const recommendedCourses = courseDatabase[subject][grade];
+                
+                // Display results
+                courseList.innerHTML = '';
+                
+                if (recommendedCourses && recommendedCourses.length > 0) {
+                    recommendedCourses.forEach(course => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('course-item');
+                        
+                        const titleDiv = document.createElement('div');
+                        titleDiv.classList.add('course-title');
+                        titleDiv.textContent = course.title;
+                        
+                        const descDiv = document.createElement('div');
+                        descDiv.classList.add('course-description');
+                        descDiv.textContent = course.description;
+                        
+                        listItem.appendChild(titleDiv);
+                        listItem.appendChild(descDiv);
+                        courseList.appendChild(listItem);
+                    });
+                } else {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('course-item');
+                    listItem.textContent = "No courses found for the selected criteria.";
+                    courseList.appendChild(listItem);
+                }
+                
+                // Show results section
+                resultsDiv.style.display = "block";
+                
+                // Scroll to results
+                resultsDiv.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>
